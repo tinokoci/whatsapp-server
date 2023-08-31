@@ -1,44 +1,48 @@
 package dev.valentino.whatsapp.chat;
 
+import dev.valentino.whatsapp.chat.dto.ChatDTO;
 import dev.valentino.whatsapp.message.Message;
 import dev.valentino.whatsapp.user.WapUser;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.util.*;
 
 @Entity
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
-@Data
+@NoArgsConstructor
 public class Chat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID uuid;
+    private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private ChatType type;
+
     private String name;
-
-    @Column(nullable = false)
     private String image;
-
-    private boolean isGroup;
 
     @ManyToOne
     private WapUser createdBy;
 
     @ManyToMany
     @Builder.Default
-    private final Set<WapUser> participants = new HashSet<>();
+    private Set<WapUser> participants = new HashSet<>();
 
     @ManyToMany
     @Builder.Default
-    private final Set<WapUser> admins = new HashSet<>();
+    private Set<WapUser> admins = new HashSet<>();
 
-    @OneToMany(mappedBy = "chat")
+    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL)
     @Builder.Default
-    private final List<Message> messages = new ArrayList<>();
+    private List<Message> messages = new ArrayList<>();
+
+    public ChatDTO toDTO() {
+        return new ChatDTO(id.toString(), name, image);
+    }
 }

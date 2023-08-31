@@ -1,4 +1,6 @@
 package dev.valentino.whatsapp.auth.response;
 
-public record AuthResponse(String jwt) {
+import java.util.UUID;
+
+public record AuthResponse(String jwt, String username, UUID id) {
 }

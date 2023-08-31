@@ -1,14 +1,13 @@
 package dev.valentino.whatsapp.auth;
 
+import dev.valentino.whatsapp.user.UserService;
+import dev.valentino.whatsapp.user.WapUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AuthProvider implements AuthenticationProvider {
 
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
     private static final BadCredentialsException BAD_CREDENTIALS = new BadCredentialsException("Bad credentials");
@@ -29,18 +28,18 @@ public class AuthProvider implements AuthenticationProvider {
             throw BAD_CREDENTIALS;
         }
         String password = (String) authentication.getCredentials();
-        UserDetails user = userDetailsService.loadUserByUsername(authentication.getName());
+        WapUser user = userService.findUserByUsername(authentication.getName());
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw BAD_CREDENTIALS;
         }
-        authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), null, user.getAuthorities());
+        authentication = new AuthToken(user.getId(), user.getUsername(), null, user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return authentication;
     }
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return authentication.isAssignableFrom(UsernamePasswordAuthenticationToken.class);
+        return authentication.isAssignableFrom(AuthToken.class);
     }
 }

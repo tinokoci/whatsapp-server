@@ -1,16 +1,17 @@
 package dev.valentino.whatsapp.chat;
 
+import dev.valentino.whatsapp.chat.dto.ChatDTO;
 import dev.valentino.whatsapp.chat.exception.ChatActionAccessException;
 import dev.valentino.whatsapp.chat.exception.ChatException;
 import dev.valentino.whatsapp.chat.request.GroupChatCreateRequest;
-import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import dev.valentino.whatsapp.user.UserService;
 import dev.valentino.whatsapp.user.WapUser;
+import dev.valentino.whatsapp.user.exception.UserNotFoundException;
+import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,29 +29,50 @@ public class ChatService {
                 .orElseThrow(() -> new ChatException("Chat not found"));
     }
 
-    public List<Chat> findAllChatsByUserId(UUID userId) {
-        return chatRepository.findAllByUserId(userId);
+    public Chat findDirectChat(WapUser user1, WapUser user2) throws ChatException {
+        return chatRepository
+                .findDirectChat(user1, user2)
+                .orElseThrow(() -> new ChatException("Chat not found"));
     }
 
-    public Chat createChat(WapUser user1, UUID userUuid2) throws UserNotFoundException {
-        Optional<Chat> optionalChat = chatRepository.findNormalChat(user1.getUuid(), userUuid2);
+    public List<ChatDTO> findAllChatsByUsername(String username) {
+        return chatRepository.findAllByUserId(username)
+                .stream()
+                .map(Chat::toDTO)
+                .collect(Collectors.toList());
+    }
 
-        if (optionalChat.isPresent()) {
-            return optionalChat.get();
-        }
-        WapUser user2 = userService.findUserById(userUuid2);
+    // TODO: 8/31/23 refactor 
+    public List<WapUser> findAllChatsOfUser() {
+        WapUser user = userService.findUserById(UserUtil.getIdFromContext());
+        return chatRepository.findAllOfUser(user)
+                .stream()
+                .map(chat -> userService.findUserById(chat.getParticipants()
+                        .stream()
+                        .filter(p -> p != user)
+                        .map(WapUser::getId)
+                        .findAny()
+                        .orElse(UUID.randomUUID())))
+                .collect(Collectors.toList());
+    }
 
-        return Chat.builder()
-                .isGroup(false)
-                .createdBy(user1)
-                .participants(Set.of(user1, user2))
-                .admins(Set.of(user1))
-                .build();
+    public ChatDTO getOrCreateChat(UUID receiverId) throws UserNotFoundException, ChatException {
+        WapUser sender = userService.findUserByUsername(UserUtil.getUsernameFromContext());
+        WapUser receiver = userService.findUserById(receiverId);
+        if (sender == receiver) throw new ChatException("You cannot message youself");
+
+        Chat chat = chatRepository
+                .findDirectChat(sender, receiver)
+                .orElseGet(() -> Chat.builder()
+                        .type(ChatType.PERSONAL)
+                        .participants(Set.of(sender, receiver))
+                        .build());
+        return chatRepository.save(chat).toDTO();
     }
 
     public Chat createGroup(GroupChatCreateRequest request, WapUser createdBy) {
         return Chat.builder()
-                .isGroup(true)
+                .type(ChatType.GROUP)
                 .createdBy(createdBy)
                 .participants(request.participants()
                         .stream()

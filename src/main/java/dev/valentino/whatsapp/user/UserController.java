@@ -1,7 +1,5 @@
 package dev.valentino.whatsapp.user;
 
-import dev.valentino.whatsapp.auth.exception.InvalidTokenException;
-import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import dev.valentino.whatsapp.user.update.UpdateUserRequest;
 import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
@@ -22,16 +20,16 @@ public class UserController {
         return ResponseEntity.ok("Hello from protected User route");
     }
 
-    @GetMapping("/{username}")
-    public ResponseEntity<List<WapUser>> getUsersByUsernameContaining(@PathVariable("username") String username) {
-        List<WapUser> users = userService.findUsersByUsernameContaining(username);
+    @GetMapping("/search/{username}")
+    public ResponseEntity<List<WapUser>> searchUsers(@PathVariable("username") String username) {
+        List<WapUser> users = userService.searchUsers(username);
         return ResponseEntity.ok(users);
     }
 
     @PutMapping("/update")
     public ResponseEntity<Void> updateUser(@RequestBody UpdateUserRequest request) {
         WapUser user = userService.findUserByUsername(UserUtil.getUsernameFromContext());
-        userService.updateUser(user.getUuid(), request);
+        userService.updateUser(user.getId(), request);
         return ResponseEntity.ok().build();
     }
 }

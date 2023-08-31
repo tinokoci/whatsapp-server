@@ -5,6 +5,7 @@ import dev.valentino.whatsapp.user.update.UpdateUserRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,8 +27,8 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    public List<WapUser> findUsersByUsernameContaining(String username) {
-        return userRepository.findUsersByUsernameContaining(username);
+    public List<WapUser> searchUsers(String username) {
+        return userRepository.searchUsers(username);
     }
 
     public void updateUser(UUID userId, UpdateUserRequest request) throws UserNotFoundException {
@@ -39,7 +40,7 @@ public class UserService {
             user.setFullName(fullName);
         }
         if (profilePicture != null) {
-            user.setProfilePicture(profilePicture);
+            user.setAvatar(profilePicture.getBytes(StandardCharsets.UTF_8));
         }
         userRepository.save(user);
     }

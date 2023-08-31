@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    @Query("SELECT m FROM Message m JOIN m.chat c WHERE c.uuid = ?1")
+    @Query("SELECT m FROM Message m JOIN m.chat c WHERE c.id = ?1")
     List<Message> findAllByChatId(UUID chatId);
 }

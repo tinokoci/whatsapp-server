@@ -1,6 +1,6 @@
 package dev.valentino.whatsapp.chat;
 
-import dev.valentino.whatsapp.auth.exception.InvalidTokenException;
+import dev.valentino.whatsapp.chat.dto.ChatDTO;
 import dev.valentino.whatsapp.chat.exception.ChatException;
 import dev.valentino.whatsapp.chat.request.GroupChatCreateRequest;
 import dev.valentino.whatsapp.chat.request.NormalChatCreateRequest;
@@ -9,6 +9,7 @@ import dev.valentino.whatsapp.user.UserService;
 import dev.valentino.whatsapp.user.WapUser;
 import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,9 +25,8 @@ public class ChatController {
     private final UserService userService;
 
     @PostMapping("/normal")
-    public ResponseEntity<Chat> createChat(@RequestBody NormalChatCreateRequest request) throws UserNotFoundException {
-        WapUser user = userService.findUserByUsername(UserUtil.getUsernameFromContext());
-        Chat chat = chatService.createChat(user, request.userId());
+    public ResponseEntity<ChatDTO> getOrCreateChat(@RequestBody NormalChatCreateRequest request) throws UserNotFoundException, ChatException {
+        ChatDTO chat = chatService.getOrCreateChat(request.receiverId());
         return ResponseEntity.ok(chat);
     }
 
@@ -44,9 +44,8 @@ public class ChatController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<Chat>> findAllChatsByUserId() throws UserNotFoundException {
-        WapUser user = userService.findUserByUsername(UserUtil.getUsernameFromContext());
-        List<Chat> chats = chatService.findAllChatsByUserId(user.getUuid());
+    public ResponseEntity<List<WapUser>> findAllChatsOfUser() throws UserNotFoundException {
+        List<WapUser> chats = chatService.findAllChatsOfUser();
         return ResponseEntity.ok(chats);
     }
 

@@ -13,6 +13,6 @@ public interface UserRepository extends JpaRepository<WapUser, UUID> {
     Optional<WapUser> findByUsername(String username);
 
     @Query("SELECT u FROM WapUser u WHERE u.username LIKE %?1%")
-    List<WapUser> findUsersByUsernameContaining(String query);
+    List<WapUser> searchUsers(String query);
 }
 

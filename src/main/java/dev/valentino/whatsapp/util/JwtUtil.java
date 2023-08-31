@@ -1,5 +1,6 @@
 package dev.valentino.whatsapp.util;
 
+import dev.valentino.whatsapp.auth.AuthToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -17,12 +18,13 @@ public class JwtUtil {
     public static SecretKey SECRET_KEY = Keys.hmacShaKeyFor("iN4B90NEWEKAGSKDNHKLSFNHKFADKNMEHYDFNHMDFHADFDdskgnsd".getBytes(StandardCharsets.UTF_8));
     public static final String AUTH_HEADER = "Authorization";
 
-    public static String createJwt(Authentication authentication) {
+    public static String createJwt(AuthToken authentication) {
         return Jwts.builder()
                 .signWith(SECRET_KEY)
+                .claim("id", authentication.getId())
                 .claim("username", authentication.getName())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(Duration.ofDays(1L).toMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + Duration.ofDays(1L).toMillis()))
                 .compact();
     }
 

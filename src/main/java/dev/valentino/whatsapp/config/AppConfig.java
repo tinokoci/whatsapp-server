@@ -2,6 +2,7 @@ package dev.valentino.whatsapp.config;
 
 import dev.valentino.whatsapp.auth.AuthJwtFilter;
 import dev.valentino.whatsapp.auth.AuthProvider;
+import dev.valentino.whatsapp.user.UserService;
 import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import dev.valentino.whatsapp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AppConfig {
 
-    private final UserRepository userRepository;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -44,7 +43,7 @@ public class AppConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(customizer -> customizer.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("localhost:3000"));
+                    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
                     configuration.setAllowedMethods(List.of("*"));
                     configuration.setAllowedHeaders(List.of("*"));
                     configuration.setExposedHeaders(List.of("Authorization"));
@@ -54,17 +53,10 @@ public class AppConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+    public AuthenticationManager authenticationManager(HttpSecurity http, UserService userService) throws Exception {
         return http.getSharedObject(AuthenticationManagerBuilder.class)
-                .authenticationProvider(new AuthProvider(userDetailsService(), passwordEncoder()))
+                .authenticationProvider(new AuthProvider(userService, passwordEncoder()))
                 .build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> userRepository
-                .findByUsername(username)
-                .orElseThrow(UserNotFoundException::new);
     }
 
     @Bean

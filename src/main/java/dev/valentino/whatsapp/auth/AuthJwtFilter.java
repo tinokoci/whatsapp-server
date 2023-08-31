@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.task.support.ExecutorServiceAdapter;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
@@ -31,7 +35,6 @@ public class AuthJwtFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         String jwt = JwtUtil.getJwtTokenFromRequest(request);
-
         if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
@@ -49,11 +52,12 @@ public class AuthJwtFilter extends OncePerRequestFilter {
             return;
         }
         // Get user data from JWT token
-        String username = claims.getSubject();
+        UUID id = UUID.fromString(claims.get("id", String.class));
+        String username = claims.get("username", String.class);
         List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(claims.get("authorities", String.class));
 
         // Set authentication to spring context
-        Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        Authentication authentication = new AuthToken(id, username, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
@@ -61,7 +65,6 @@ public class AuthJwtFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        System.out.println(request.getServletPath());
         return Stream.of("/public", "/api/v1/auth")
                 .anyMatch(path -> request.getServletPath().startsWith(path));
     }

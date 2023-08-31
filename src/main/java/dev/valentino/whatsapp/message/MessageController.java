@@ -1,8 +1,9 @@
 package dev.valentino.whatsapp.message;
 
 import dev.valentino.whatsapp.chat.exception.ChatException;
+import dev.valentino.whatsapp.message.dto.MessageDTO;
 import dev.valentino.whatsapp.message.exception.MessageException;
-import dev.valentino.whatsapp.message.request.SendMessageRequest;
+import dev.valentino.whatsapp.message.request.MessageSendRequest;
 import dev.valentino.whatsapp.user.UserService;
 import dev.valentino.whatsapp.user.WapUser;
 import dev.valentino.whatsapp.user.exception.UserNotFoundException;
@@ -22,16 +23,22 @@ public class MessageController {
     private final MessageService messageService;
     private final UserService userService;
 
-    @PostMapping
-    public ResponseEntity<Message> sendMessage(@RequestBody SendMessageRequest request) throws UserNotFoundException, ChatException {
-        Message message = messageService.sendMessage(request);
+    @PostMapping("/personal")
+    public ResponseEntity<MessageDTO> sendPersonalMessage(@RequestBody MessageSendRequest request) throws UserNotFoundException, ChatException {
+        MessageDTO message = messageService.sendPersonalMessage(request);
         return ResponseEntity.ok(message);
     }
 
-    @GetMapping("/chat/{chatId}")
-    public ResponseEntity<List<Message>> getChatMessages(@PathVariable UUID chatId) throws ChatException, UserNotFoundException {
+    @PostMapping("/group")
+    public ResponseEntity<Message> sendGroupMessage(@RequestBody MessageSendRequest request) throws UserNotFoundException, ChatException {
+        Message message = messageService.sendGroupMessage(request);
+        return ResponseEntity.ok(message);
+    }
+
+    @GetMapping("/chat/{entityId}")
+    public ResponseEntity<List<MessageDTO>> getChatMessages(@PathVariable UUID entityId) throws ChatException, UserNotFoundException {
         WapUser user = userService.findUserByUsername(UserUtil.getUsernameFromContext());
-        List<Message> messages = messageService.getChatMessages(chatId, user);
+        List<MessageDTO> messages = messageService.getDirectChatMessages(entityId, user);
         return ResponseEntity.ok(messages);
     }
 
