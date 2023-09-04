@@ -12,7 +12,7 @@ public interface UserRepository extends JpaRepository<WapUser, UUID> {
     @Query("SELECT u FROM WapUser u WHERE u.username = ?1")
     Optional<WapUser> findByUsername(String username);
 
-    @Query("SELECT u FROM WapUser u WHERE u.username LIKE %?1%")
-    List<WapUser> searchUsers(String query);
+    @Query("SELECT u FROM WapUser u WHERE u.username LIKE %?1% AND u != ?2")
+    List<WapUser> searchUsersByUsername(String username, WapUser excludedUser);
 }
 

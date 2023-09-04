@@ -28,12 +28,12 @@ public class AuthProvider implements AuthenticationProvider {
             throw BAD_CREDENTIALS;
         }
         String password = (String) authentication.getCredentials();
-        WapUser user = userService.findUserByUsername(authentication.getName());
+        WapUser user = userService.getUserByUsername(authentication.getName());
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw BAD_CREDENTIALS;
         }
-        authentication = new AuthToken(user.getId(), user.getUsername(), null, user.getAuthorities());
+        authentication = new AuthToken(user, null, user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return authentication;
     }

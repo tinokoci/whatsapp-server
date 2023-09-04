@@ -2,14 +2,11 @@ package dev.valentino.whatsapp;
 
 import dev.valentino.whatsapp.user.UserRepository;
 import dev.valentino.whatsapp.user.WapUser;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.nio.charset.StandardCharsets;
 
 @SpringBootApplication
 public class WhatsappServerApplication {

@@ -1,5 +1,7 @@
 package dev.valentino.whatsapp.auth;
 
+import dev.valentino.whatsapp.user.UserService;
+import dev.valentino.whatsapp.user.WapUser;
 import dev.valentino.whatsapp.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -8,10 +10,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.task.support.ExecutorServiceAdapter;
 import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,12 +20,12 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class AuthJwtFilter extends OncePerRequestFilter {
+
+    private final UserService userService;
 
     @Override
     protected void doFilterInternal(
@@ -51,14 +50,20 @@ public class AuthJwtFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+
         // Get user data from JWT token
         UUID id = UUID.fromString(claims.get("id", String.class));
-        String username = claims.get("username", String.class);
         List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(claims.get("authorities", String.class));
 
-        // Set authentication to spring context
-        Authentication authentication = new AuthToken(id, username, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // If context has no authentication present, fetch user for it
+        AuthToken authToken = (AuthToken) SecurityContextHolder.getContext().getAuthentication();
+        WapUser user = authToken == null
+                ? userService.getUserById(id)
+                : authToken.getUser();
+
+        // Set new authentication to spring context
+        authToken = new AuthToken(user, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }

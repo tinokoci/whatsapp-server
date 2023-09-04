@@ -1,7 +1,8 @@
 package dev.valentino.whatsapp.auth;
 
-import dev.valentino.whatsapp.auth.request.AuthRequest;
-import dev.valentino.whatsapp.auth.response.AuthResponse;
+import dev.valentino.whatsapp.auth.http.AuthRequest;
+import dev.valentino.whatsapp.auth.http.AuthResponse;
+import dev.valentino.whatsapp.user.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,14 +18,17 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signUp(@RequestBody AuthRequest request) {
-        AuthResponse response = authService.signUp(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<UserDTO> signUp(@RequestBody AuthRequest request) {
+        return authService.signUp(request);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
-        AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<UserDTO> login(@RequestBody AuthRequest request) {
+        return authService.login(request);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return authService.logout();
     }
 }

@@ -1,4 +1,4 @@
-package dev.valentino.whatsapp.chat.exception;
+package dev.valentino.whatsapp.chat;
 
 public class ChatException extends Exception {
 

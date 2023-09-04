@@ -3,8 +3,6 @@ package dev.valentino.whatsapp.config;
 import dev.valentino.whatsapp.auth.AuthJwtFilter;
 import dev.valentino.whatsapp.auth.AuthProvider;
 import dev.valentino.whatsapp.user.UserService;
-import dev.valentino.whatsapp.user.exception.UserNotFoundException;
-import dev.valentino.whatsapp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +10,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,6 +21,8 @@ import java.util.List;
 @Configuration
 @RequiredArgsConstructor
 public class AppConfig {
+
+    private final UserService userService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,14 +38,15 @@ public class AppConfig {
                         .anyRequest()
                         .permitAll()
                 )
-                .addFilterBefore(new AuthJwtFilter(), BasicAuthenticationFilter.class)
+                .addFilterBefore(new AuthJwtFilter(userService), BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(customizer -> customizer.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
                     configuration.setAllowedOrigins(List.of("http://localhost:3000"));
                     configuration.setAllowedMethods(List.of("*"));
                     configuration.setAllowedHeaders(List.of("*"));
-                    configuration.setExposedHeaders(List.of("Authorization"));
+                    configuration.setExposedHeaders(List.of("*"));
+                    configuration.setAllowCredentials(true);
                     return configuration;
                 }))
                 .build();

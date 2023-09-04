@@ -1,7 +1,12 @@
 package dev.valentino.whatsapp.user;
 
 import dev.valentino.whatsapp.util.UserUtil;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,11 +37,21 @@ public class WapUser implements UserDetails {
 
     private String email;
     private String fullName;
+
+    @Lob
     private byte[] avatar;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(UserUtil.DEFAULT_AUTHORITY);
+    }
+
+    public boolean isSameAs(WapUser user) {
+        return id.equals(user.getId());
+    }
+
+    public UserDTO toDTO() {
+        return new UserDTO(id, username, fullName, avatar);
     }
 
     @Override

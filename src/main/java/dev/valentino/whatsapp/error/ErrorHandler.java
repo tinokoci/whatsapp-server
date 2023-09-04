@@ -1,9 +1,8 @@
 package dev.valentino.whatsapp.error;
 
-import dev.valentino.whatsapp.chat.exception.ChatActionAccessException;
-import dev.valentino.whatsapp.chat.exception.ChatException;
+import dev.valentino.whatsapp.chat.ChatActionAccessException;
+import dev.valentino.whatsapp.chat.ChatException;
 import dev.valentino.whatsapp.message.exception.MessageException;
-import dev.valentino.whatsapp.user.exception.UserException;
 import dev.valentino.whatsapp.user.exception.UserFieldInUseException;
 import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;

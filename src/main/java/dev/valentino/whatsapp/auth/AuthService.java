@@ -1,18 +1,24 @@
 package dev.valentino.whatsapp.auth;
 
-import dev.valentino.whatsapp.auth.request.AuthRequest;
-import dev.valentino.whatsapp.auth.response.AuthResponse;
+import dev.valentino.whatsapp.auth.http.AuthRequest;
+import dev.valentino.whatsapp.auth.http.AuthResponse;
+import dev.valentino.whatsapp.user.UserDTO;
 import dev.valentino.whatsapp.user.UserRepository;
 import dev.valentino.whatsapp.user.WapUser;
 import dev.valentino.whatsapp.user.exception.UserFieldInUseException;
 import dev.valentino.whatsapp.util.JwtUtil;
 import dev.valentino.whatsapp.util.UserUtil;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
 
-    public AuthResponse signUp(AuthRequest request) {
+    public ResponseEntity<UserDTO> signUp(AuthRequest request) {
         String username = request.username();
         String fullName = request.fullName();
         String password = request.password();
@@ -39,16 +45,15 @@ public class AuthService {
                 .build();
         userRepository.save(user);
 
-        // Create authentication and set it in spring context
-        AuthToken authToken= new AuthToken(user.getId(), username, password);
+        // Create authentication and set it in security context
+        AuthToken authToken = new AuthToken(user, password);
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        // Return auth response with jwt
         String jwt = JwtUtil.createJwt(authToken);
-        return new AuthResponse(jwt, user.getUsername(), user.getId());
+        return createAuthResponseEntity(jwt, authToken.getUser());
     }
 
-    public AuthResponse login(AuthRequest request) {
+    public ResponseEntity<UserDTO> login(AuthRequest request) {
         String username = request.username();
         String password = request.password();
 
@@ -63,6 +68,32 @@ public class AuthService {
 
         // Return auth response with jwt
         String jwt = JwtUtil.createJwt(authToken);
-        return new AuthResponse(jwt, authToken.getUsername() , authToken.getId());
+        return createAuthResponseEntity(jwt, authToken.getUser());
+    }
+
+    public ResponseEntity<Void> logout() {
+        ResponseCookie jwtCookie = ResponseCookie.from("token", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+        SecurityContextHolder.getContext().setAuthentication(null);
+        return ResponseEntity
+                .ok()
+                .headers(consumer -> consumer.add(HttpHeaders.SET_COOKIE, jwtCookie.toString()))
+                .build();
+    }
+
+
+    private ResponseEntity<UserDTO> createAuthResponseEntity(String jwt, WapUser user) {
+        ResponseCookie jwtCookie = ResponseCookie.from("token", jwt)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(Duration.ofDays(30))
+                .build();
+        return ResponseEntity
+                .ok()
+                .headers(consumer -> consumer.add(HttpHeaders.SET_COOKIE, jwtCookie.toString()))
+                .body(user.toDTO());
     }
 }

@@ -1,27 +1,24 @@
 package dev.valentino.whatsapp.auth;
 
+import dev.valentino.whatsapp.user.WapUser;
 import lombok.Getter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
-import java.util.UUID;
+
 @Getter
 public class AuthToken extends UsernamePasswordAuthenticationToken {
 
-    private final UUID id;
+    private final WapUser user;
 
-    public AuthToken(UUID id, String username, Object credentials) {
-        super(username, credentials);
-        this.id = id;
+    public AuthToken(WapUser user, Object credentials) {
+        super(user.getUsername(), credentials);
+        this.user = user;
     }
 
-    public AuthToken(UUID id, String username, Object credentials, Collection<? extends GrantedAuthority> authorities) {
-        super(username, credentials, authorities);
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return (String) getPrincipal();
+    public AuthToken(WapUser user, Object credentials, Collection<? extends GrantedAuthority> authorities) {
+        super(user.getUsername(), credentials, authorities);
+        this.user = user;
     }
 }
