@@ -17,7 +17,6 @@ public class ChatHandler {
     @MessageMapping("/message")
     @SendTo("/chat/public")
     public MessageDTO receiveMessage(@Payload MessageDTO message) {
-        System.out.println("received: " + message.toString());
         simpMessagingTemplate.convertAndSend("/chat/" + message.chatId(), message);
         return message;
     }
