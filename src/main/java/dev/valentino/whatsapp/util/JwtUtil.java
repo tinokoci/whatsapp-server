@@ -33,12 +33,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    public static <T> T getClaimFromJwt(String jwt, String claimName, Class<T> clazz) {
-        Claims claims = getClaimsFromJwt(jwt);
-        if (claims == null) return null;
-        return claims.get(claimName, clazz);
-    }
-
     public static Claims getClaimsFromJwt(String jwt) {
         return Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY)

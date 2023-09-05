@@ -43,6 +43,6 @@ public class Message {
     private Chat chat;
 
     public MessageDTO toDTO() {
-        return new MessageDTO(sender.getId().toString(), text, timestamp);
+        return new MessageDTO(chat.getId().toString(), sender.getId().toString(), text, timestamp);
     }
 }

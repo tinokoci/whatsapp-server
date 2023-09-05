@@ -4,7 +4,6 @@ import dev.valentino.whatsapp.user.UserService;
 import dev.valentino.whatsapp.user.WapUser;
 import dev.valentino.whatsapp.util.JwtUtil;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,11 +38,7 @@ public class AuthJwtFilter extends OncePerRequestFilter {
             return;
         }
         // Convert jwt string to an actual object
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(JwtUtil.SECRET_KEY)
-                .build()
-                .parseClaimsJws(jwt)
-                .getBody();
+        Claims claims = JwtUtil.getClaimsFromJwt(jwt);
 
         // Fail if token is expired
         if (claims.getExpiration().before(new Date())) {
