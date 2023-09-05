@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,8 @@ public class Chat {
     private UUID id;
 
     private String name;
+
+    @Lob
     private byte[] image;
 
     @Enumerated(EnumType.STRING)
