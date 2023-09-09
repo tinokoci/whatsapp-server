@@ -11,6 +11,7 @@ import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -24,12 +25,14 @@ public class GroupService {
     private final ChatRepository chatRepository;
     private final UserService userService;
 
+    @Transactional
     public Chat getGroupById(UUID groupId) throws ChatException {
         return chatRepository
                 .findById(groupId, ChatType.GROUP)
                 .orElseThrow(() -> new ChatException("Group not found"));
     }
 
+    @Transactional
     public List<GroupDTO> getUserGroups() {
         return chatRepository.findAllChatsByUser(UserUtil.getUserFromContext(), ChatType.GROUP)
                 .stream()
@@ -37,9 +40,11 @@ public class GroupService {
                 .toList();
     }
 
+    @Transactional
     public Chat createGroup(GroupCreateRequest request) {
-        return Chat.builder()
+        Chat chat = Chat.builder()
                 .type(ChatType.GROUP)
+                .name(request.name())
                 .participants(request.participants()
                         .stream()
                         .map(participantId -> {
@@ -51,6 +56,7 @@ public class GroupService {
                         }).collect(Collectors.toSet()))
                 .admins(Set.of(UserUtil.getUserFromContext()))
                 .build();
+        return chatRepository.save(chat);
     }
 
     public void addUserToGroup(UUID groupId, UUID userToAddId) throws UserNotFoundException, ChatException {
