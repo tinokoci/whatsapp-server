@@ -16,6 +16,6 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
     @Query("SELECT c FROM Chat c WHERE c.type = DIRECT AND ?1 MEMBER OF c.participants AND ?2 MEMBER OF c.participants")
     Optional<Chat> findDirectChatByParticipants(WapUser user1, WapUser user2);
 
-    @Query("SELECT c FROM Chat c WHERE c.type = DIRECT AND ?1 MEMBER OF c.participants")
-    List<Chat> findAllDirectChatsByUser(WapUser user);
+    @Query("SELECT c FROM Chat c WHERE c.type = ?2 AND ?1 MEMBER OF c.participants")
+    List<Chat> findAllChatsByUser(WapUser user, ChatType type);
 }

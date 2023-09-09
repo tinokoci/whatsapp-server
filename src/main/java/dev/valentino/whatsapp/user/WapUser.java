@@ -1,8 +1,10 @@
 package dev.valentino.whatsapp.user;
 
 import dev.valentino.whatsapp.util.UserUtil;
+import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,6 +41,7 @@ public class WapUser implements UserDetails {
     private String fullName;
 
     @Lob
+    @Basic(fetch = FetchType.LAZY)
     private byte[] avatar;
 
     @Override

@@ -12,24 +12,32 @@ import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class GroupChatService {
+public class GroupService {
 
-    private final ChatRepository groupChatRepository;
+    private final ChatRepository chatRepository;
     private final UserService userService;
 
-    public Chat getGroupChatById(UUID groupId) throws ChatException {
-        return groupChatRepository
+    public Chat getGroupById(UUID groupId) throws ChatException {
+        return chatRepository
                 .findById(groupId, ChatType.GROUP)
                 .orElseThrow(() -> new ChatException("Group not found"));
     }
 
-    public Chat createGroup(GroupChatCreateRequest request) {
+    public List<GroupDTO> getUserGroups() {
+        return chatRepository.findAllChatsByUser(UserUtil.getUserFromContext(), ChatType.GROUP)
+                .stream()
+                .map(Chat::toGroupDTO)
+                .toList();
+    }
+
+    public Chat createGroup(GroupCreateRequest request) {
         return Chat.builder()
                 .type(ChatType.GROUP)
                 .participants(request.participants()
@@ -46,7 +54,7 @@ public class GroupChatService {
     }
 
     public void addUserToGroup(UUID groupId, UUID userToAddId) throws UserNotFoundException, ChatException {
-        Chat group = getGroupChatById(groupId);
+        Chat group = getGroupById(groupId);
 
         if (!group.isAdmin(UserUtil.getUserFromContext())) {
             throw new ChatActionAccessException();
@@ -57,11 +65,11 @@ public class GroupChatService {
             throw new ChatException("User already in group");
         }
         group.getParticipants().add(userToAdd);
-        groupChatRepository.save(group);
+        chatRepository.save(group);
     }
 
     public void removeUserFromGroup(UUID groupId, UUID userToRemoveId) throws UserNotFoundException, ChatException {
-        Chat group = getGroupChatById(groupId);
+        Chat group = getGroupById(groupId);
 
         if (!group.isAdmin(UserUtil.getUserFromContext())) {
             throw new ChatActionAccessException();
@@ -72,29 +80,25 @@ public class GroupChatService {
             throw new ChatException("User not in group");
         }
         group.getParticipants().remove(userToRemove);
-        groupChatRepository.save(group);
+        chatRepository.save(group);
     }
 
     public void renameGroup(UUID groupId, String name) throws ChatException {
-        Chat group = getGroupChatById(groupId);
+        Chat group = getGroupById(groupId);
 
         if (!group.isAdmin(UserUtil.getUserFromContext())) {
             throw new ChatActionAccessException();
         }
         group.setName(name);
-        groupChatRepository.save(group);
+        chatRepository.save(group);
     }
 
     public void deleteGroup(UUID groupId) throws ChatException {
-        Chat group = getGroupChatById(groupId);
+        Chat group = getGroupById(groupId);
 
         if (!group.isAdmin(UserUtil.getUserFromContext())) {
             throw new ChatActionAccessException();
         }
-        groupChatRepository.deleteById(groupId);
-    }
-
-    private GroupChatDTO getGroupChatDTO(Chat chat) {
-        return new GroupChatDTO(chat.getId(), chat.getName(), chat.getImage());
+        chatRepository.deleteById(groupId);
     }
 }

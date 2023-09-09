@@ -1,12 +1,16 @@
 package dev.valentino.whatsapp.chat;
 
+import dev.valentino.whatsapp.chat.impl.direct.DirectChatDTO;
+import dev.valentino.whatsapp.chat.impl.group.GroupDTO;
 import dev.valentino.whatsapp.message.Message;
 import dev.valentino.whatsapp.user.WapUser;
+import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,17 +43,18 @@ public class Chat {
     private String name;
 
     @Lob
-    private byte[] image;
+    @Basic(fetch = FetchType.LAZY)
+    private byte[] avatar;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChatType type;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @Builder.Default
     private Set<WapUser> participants = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @Builder.Default
     private Set<WapUser> admins = new HashSet<>();
 
@@ -66,5 +72,9 @@ public class Chat {
         return participants
                 .stream()
                 .anyMatch(participant -> participant.isSameAs(user));
+    }
+
+    public GroupDTO toGroupDTO() {
+        return new GroupDTO(id, name, avatar);
     }
 }

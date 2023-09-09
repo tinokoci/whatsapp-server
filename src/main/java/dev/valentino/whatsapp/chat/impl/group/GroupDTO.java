@@ -2,7 +2,7 @@ package dev.valentino.whatsapp.chat.impl.group;
 
 import java.util.UUID;
 
-public record GroupChatDTO(
+public record GroupDTO(
         UUID chatId,
         String name,
         byte[] avatar

@@ -4,17 +4,17 @@ import dev.valentino.whatsapp.chat.Chat;
 import dev.valentino.whatsapp.chat.ChatActionAccessException;
 import dev.valentino.whatsapp.chat.ChatException;
 import dev.valentino.whatsapp.chat.ChatRepository;
-import dev.valentino.whatsapp.chat.impl.direct.DirectChatService;
+import dev.valentino.whatsapp.chat.ChatService;
 import dev.valentino.whatsapp.message.dto.MessageDTO;
 import dev.valentino.whatsapp.message.exception.MessageException;
 import dev.valentino.whatsapp.message.request.MessageSendRequest;
-import dev.valentino.whatsapp.user.UserService;
 import dev.valentino.whatsapp.user.WapUser;
 import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,8 +25,10 @@ import java.util.stream.Collectors;
 public class MessageService {
 
     private final ChatRepository chatRepository;
+    private final ChatService chatService;
     private final MessageRepository messageRepository;
 
+    @Transactional
     public MessageDTO sendMessage(MessageSendRequest request) throws UserNotFoundException, ChatException {
         WapUser sender = UserUtil.getUserFromContext();
         Chat chat = chatRepository
@@ -58,7 +60,11 @@ public class MessageService {
         messageRepository.deleteById(messageId);
     }
 
-    public List<MessageDTO> getAllMessages(Chat chat) {
+    public List<MessageDTO> getAllMessagesInChat(Chat chat) throws ChatActionAccessException {
+        WapUser user = UserUtil.getUserFromContext();
+        if (!chat.isParticipant(user)) {
+            throw new ChatActionAccessException();
+        }
         Sort sort = Sort.by(Sort.Direction.DESC, "timestamp");
         return messageRepository.findAllInChat(chat, sort)
                 .stream()
@@ -66,13 +72,13 @@ public class MessageService {
                 .collect(Collectors.toList());
     }
 
-    public MessageDTO getLatestMessage(Chat chat) {
-        List<MessageDTO> messages = getAllMessages(chat);
-        return messages.isEmpty() ? null : messages.get(0);
+    public List<MessageDTO> getAllMessagesInChat(UUID chatId) throws ChatException {
+        Chat chat = chatService.getChatById(chatId);
+        return getAllMessagesInChat(chat);
     }
 
-    public String getLatestMessageText(Chat chat) {
-        MessageDTO latestMessage = getLatestMessage(chat);
-        return latestMessage == null ? "" : latestMessage.text();
+    public MessageDTO getLatestMessage(Chat chat) throws ChatActionAccessException {
+        List<MessageDTO> messages = getAllMessagesInChat(chat);
+        return messages.isEmpty() ? null : messages.get(0);
     }
 }

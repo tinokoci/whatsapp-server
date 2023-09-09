@@ -29,16 +29,10 @@ public class DirectChatController {
         return ResponseEntity.ok(chat);
     }
 
-    @GetMapping("/user")
+    @GetMapping
     public ResponseEntity<List<DirectChatDTO>> getUserDirectChats() throws UserNotFoundException {
         List<DirectChatDTO> chats = directChatService.getUserDirectChats();
         return ResponseEntity.ok(chats);
-    }
-
-    @GetMapping("/{chatId}/messages")
-    public ResponseEntity<List<MessageDTO>> getDirectChatMessages(@PathVariable UUID chatId) throws UserNotFoundException, ChatException {
-        List<MessageDTO> messages = directChatService.getDirectChatMessages(chatId);
-        return ResponseEntity.ok(messages);
     }
 
     @GetMapping("/search/{username}")

@@ -5,7 +5,7 @@ import dev.valentino.whatsapp.chat.ChatActionAccessException;
 import dev.valentino.whatsapp.chat.ChatException;
 import dev.valentino.whatsapp.chat.ChatRepository;
 import dev.valentino.whatsapp.chat.ChatType;
-import dev.valentino.whatsapp.message.MessageRepository;
+import dev.valentino.whatsapp.message.Message;
 import dev.valentino.whatsapp.message.MessageService;
 import dev.valentino.whatsapp.message.dto.MessageDTO;
 import dev.valentino.whatsapp.user.UserService;
@@ -15,6 +15,7 @@ import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,19 +31,7 @@ public class DirectChatService {
     private final MessageService messageService;
     private final UserService userService;
 
-    public Chat getDirectChatById(UUID chatId) throws ChatException {
-        return chatRepository
-                .findById(chatId, ChatType.DIRECT)
-                .orElseThrow(() -> new ChatException("Chat not found"));
-    }
-
-    public Chat getDirectChatByRecipient(WapUser recipient) throws ChatException {
-        WapUser sender = UserUtil.getUserFromContext();
-        return chatRepository
-                .findDirectChatByParticipants(sender, recipient)
-                .orElseThrow(() -> new ChatException("Chat not found"));
-    }
-
+    @Transactional
     public DirectChatDTO getOrCreateDirectChat(UUID recipientId) throws UserNotFoundException, ChatException {
         WapUser sender = UserUtil.getUserFromContext();
         WapUser recipient = userService.getUserById(recipientId);
@@ -60,49 +49,52 @@ public class DirectChatService {
         return getDirectChatDTO(chat, recipient);
     }
 
+    // ugly exception handling, maybe refactor in the future
+    @Transactional
     public List<DirectChatDTO> getUserDirectChats() {
-        return chatRepository.findAllDirectChatsByUser(UserUtil.getUserFromContext())
+        return chatRepository.findAllChatsByUser(UserUtil.getUserFromContext(), ChatType.DIRECT)
                 .stream()
                 .map(chat -> {
-                    String latestMessageText = messageService.getLatestMessageText(chat);
-                    if (latestMessageText.isEmpty()) return null;
+                    MessageDTO latestMessage;
+                    try {
+                        latestMessage = messageService.getLatestMessage(chat);
+                    } catch (ChatActionAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (latestMessage == null) return null;
                     try {
                         WapUser recipient = getDirectChatRecipient(chat);
-                        return getDirectChatDTO(chat, recipient, latestMessageText);
+                        return getDirectChatDTO(chat, recipient, latestMessage);
                     } catch (ChatException e) {
                         throw new RuntimeException(e);
                     }
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    // ugly exception handling, maybe refactor in the future
+    @Transactional
     public List<DirectChatDTO> searchDirectChatsByUsername(String username) {
-        return userService.searchUsersByUsername(username)
+        return userService.getUsersByUsername(username)
                 .stream()
                 .map(user -> {
                     Chat chat = null;
-                    String latestMessageText = null;
+                    MessageDTO latestMessage = null;
                     try {
                         chat = getDirectChatByRecipient(user);
                     } catch (ChatException ignored) {
                     }
                     if (chat != null) {
-                        latestMessageText = messageService.getLatestMessageText(chat);
+                        try {
+                            latestMessage = messageService.getLatestMessage(chat);
+                        } catch (ChatActionAccessException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    return getDirectChatDTO(chat, user, latestMessageText);
+                    return getDirectChatDTO(chat, user, latestMessage);
                 })
                 .collect(Collectors.toList());
-    }
-
-    public List<MessageDTO> getDirectChatMessages(UUID chatId) throws ChatException {
-        WapUser user = UserUtil.getUserFromContext();
-        Chat chat = getDirectChatById(chatId);
-
-        if (!chat.isParticipant(user)) {
-            throw new ChatActionAccessException();
-        }
-        return messageService.getAllMessages(chat);
     }
 
     private WapUser getDirectChatRecipient(Chat chat) throws ChatException {
@@ -114,18 +106,26 @@ public class DirectChatService {
                 .orElseThrow(() -> new ChatException("Missing recipient in direct chat " + chat.getId()));
     }
 
+    private Chat getDirectChatByRecipient(WapUser recipient) throws ChatException {
+        WapUser sender = UserUtil.getUserFromContext();
+        return chatRepository
+                .findDirectChatByParticipants(sender, recipient)
+                .orElseThrow(() -> new ChatException("Chat not found"));
+    }
+
     private DirectChatDTO getDirectChatDTO(Chat chat, WapUser recipient) {
         return getDirectChatDTO(chat, recipient, null);
     }
 
-    private DirectChatDTO getDirectChatDTO(@Nullable Chat chat, WapUser recipient, String latestMessageText) {
+    private DirectChatDTO getDirectChatDTO(@Nullable Chat chat, WapUser recipient, MessageDTO latestMessage) {
         UUID chatId = chat == null ? null : chat.getId();
         return new DirectChatDTO(
                 chatId,
                 recipient.getId(),
                 recipient.getUsername(),
                 recipient.getAvatar(),
-                latestMessageText
+                latestMessage
         );
     }
+
 }

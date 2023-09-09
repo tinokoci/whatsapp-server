@@ -26,6 +26,12 @@ public class MessageController {
 
     private final MessageService messageService;
 
+    @GetMapping("/{chatId}")
+    public ResponseEntity<List<MessageDTO>> getAllMessagesInChat(@PathVariable UUID chatId) throws ChatException {
+        List<MessageDTO> messages = messageService.getAllMessagesInChat(chatId);
+        return ResponseEntity.ok(messages);
+    }
+
     @PostMapping
     public ResponseEntity<MessageDTO> sendMessage(@RequestBody MessageSendRequest request) throws UserNotFoundException, ChatException {
         MessageDTO message = messageService.sendMessage(request);

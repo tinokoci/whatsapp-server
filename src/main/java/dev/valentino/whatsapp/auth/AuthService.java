@@ -17,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
@@ -28,6 +29,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
 
+    @Transactional
     public ResponseEntity<UserDTO> signUp(AuthRequest request) {
         String username = request.username();
         String fullName = request.fullName();
@@ -53,6 +55,7 @@ public class AuthService {
         return createAuthResponseEntity(jwt, authToken.getUser());
     }
 
+    @Transactional
     public ResponseEntity<UserDTO> login(AuthRequest request) {
         String username = request.username();
         String password = request.password();

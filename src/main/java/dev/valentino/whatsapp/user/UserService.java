@@ -3,9 +3,9 @@ package dev.valentino.whatsapp.user;
 import dev.valentino.whatsapp.user.exception.UserNotFoundException;
 import dev.valentino.whatsapp.util.UserUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.web.servlet.MultipartAutoConfiguration;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -36,11 +36,20 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    public List<WapUser> searchUsersByUsername(String username) {
+    public List<WapUser> getUsersByUsername(String username) {
         WapUser excludedUser = UserUtil.getUserFromContext(); // don't show user searching themselves
         return userRepository.searchUsersByUsername(username, excludedUser);
     }
 
+    public List<UserDTO> searchUsersByUsername(String username) {
+        WapUser excludedUser = UserUtil.getUserFromContext(); // don't show user searching themselves
+        return userRepository.searchUsersByUsername(username, excludedUser)
+                .stream()
+                .map(WapUser::toDTO)
+                .toList();
+    }
+
+    @Transactional
     public UserDTO updateUser(UserUpdateRequest request) {
         WapUser user = getUserById(UserUtil.getIdFromContext());
         String username = request.username();
@@ -55,10 +64,10 @@ public class UserService {
         return userRepository.save(user).toDTO();
     }
 
-    public UserDTO updateAvatar(MultipartFile file) throws IOException {
+    @Transactional
+    public UserDTO updateUserAvatar(MultipartFile file) throws IOException {
         WapUser user = getUserById(UserUtil.getIdFromContext());
         user.setAvatar(file.getBytes());
-        System.out.println("saved " + file.getName());
         return userRepository.save(user).toDTO();
     }
 }
