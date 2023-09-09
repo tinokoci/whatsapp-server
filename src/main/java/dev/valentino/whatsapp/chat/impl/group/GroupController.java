@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +27,12 @@ public class GroupController {
     public ResponseEntity<GroupDTO> getGroup(@PathVariable UUID groupId) throws ChatException {
         GroupDTO group = groupService.getGroupById(groupId).toGroupDTO();
         return ResponseEntity.ok(group);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GroupDTO>> getUserGroups() {
+        List<GroupDTO> groups = groupService.getUserGroups();
+        return ResponseEntity.ok(groups);
     }
 
     @PostMapping
